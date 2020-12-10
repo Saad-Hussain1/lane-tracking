@@ -66,7 +66,6 @@ def train(model, train_data, val_data, batch_size=1, learning_rate=0.01, num_epo
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True) # shuffle after every epoch
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=0)
-    # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     iters, losses, train_acc, val_acc = [], [], [], []
 

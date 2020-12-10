@@ -2,14 +2,15 @@
 Results depicted in various forms
 """
 
+import random
 import cv2
 import torch
 import matplotlib.pyplot as plt
-from train import device, images, cnn
+from train import device, images, labels, imagesT, cnn
 
 def label_text(label_int):
     """
-    Return text representation of label_int
+    Return text representation of label_int (0, 1, 2, or 3)
     """
     if label_int == 0:
         return "reverse"
@@ -22,32 +23,35 @@ def label_text(label_int):
 
     return "unrecognized"
 
-def plot_predictions(model, imgs):
+def plot_predictions(model, imgsT, lbls):
     """
-    Plot 3 predictions for fw, right, left
+    Plot 12 random images with their predictions and labels. 9 correct, 3 incorrect.
+    Args:
+        model: torch NN model
+        imgsT: images tensor
+        lbls: labels array
     """
-    f_idx = [0, 1054, 3840]
-    l_idx = [214, 2449, 3691]
-    r_idx = [41, 1220, 2718]
+    plt.figure(figsize=(13,14))
 
-    plt.figure(figsize=(10,10))
+    correct = 0
+    incorrect = 0
 
-    for i in range(9):
-        if i < 3:
-            pred = label_text(int(model(imgs[f_idx[i]].unsqueeze(0).unsqueeze(0)).max(1, keepdim=True)[1]))
-            plt.subplot(3, 3, i+1)
-            plt.imshow(imgs[f_idx[i]].cpu().numpy(), cmap='gray')
-            plt.title("Prediction: {}".format(pred))
-        elif i < 6:
-            pred = label_text(int(model(images[l_idx[i-3]].unsqueeze(0).unsqueeze(0)).max(1, keepdim=True)[1]))
-            plt.subplot(3, 3, i+1)
-            plt.imshow(imgs[l_idx[i-3]].cpu().numpy(), cmap='gray')
-            plt.title("Prediction: {}".format(pred))
-        else:
-            pred = label_text(int(model(imgs[r_idx[i-6]].unsqueeze(0).unsqueeze(0)).max(1, keepdim=True)[1]))
-            plt.subplot(3, 3, i+1)
-            plt.imshow(imgs[r_idx[i-6]].cpu().numpy(), cmap='gray')
-            plt.title("Prediction: {}".format(pred))
+    while correct < 9 or incorrect < 3:
+        idx = random.randint(0, 3861)
+        img = imgsT[idx].unsqueeze(0).unsqueeze(0)
+        pred = int(model(img).max(1, keepdim=True)[1])
+        lbl = int(lbls[idx])
+
+        if pred == lbl and correct < 9:
+            correct += 1
+            plt.subplot(4, 3, correct)
+            plt.imshow(imgsT[idx].cpu().numpy(), cmap='gray')
+            plt.title("Prediction: {} | Actual: {}".format(label_text(pred), label_text(lbl)))
+        elif pred != lbl and incorrect < 3:
+            incorrect += 1
+            plt.subplot(4, 3, incorrect + 9)
+            plt.imshow(imgsT[idx].cpu().numpy(), cmap='gray')
+            plt.title("Prediction: {} | Actual: {}".format(label_text(pred), label_text(lbl)))
 
     plt.subplots_adjust(hspace=0.3, wspace=0)
     plt.show()
@@ -124,6 +128,6 @@ def constr_vid_orig(model, imgs):
     out.release()
 
 if __name__ == '__main__':
-    plot_predictions(cnn, images)
+    plot_predictions(cnn, imagesT, labels)
     constr_vid_custom(cnn)
     constr_vid_orig(cnn, images)
